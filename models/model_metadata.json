@@ -1,0 +1,55 @@
+{
+  "model_name": "Random Forest",
+  "training_date": "2026-08-22T11:25:19.694703",
+  "feature_names": [
+    "Temperature",
+    "Voltage",
+    "Current",
+    "Weight",
+    "Pressure",
+    "Humidity",
+    "Machine_Speed"
+  ],
+  "target_classes": [
+    "PASS",
+    "REWORK",
+    "REJECT"
+  ],
+  "model_class_order": [
+    "PASS",
+    "REJECT",
+    "REWORK"
+  ],
+  "dataset_size": 6000,
+  "class_distribution": {
+    "PASS": 2700,
+    "REWORK": 2100,
+    "REJECT": 1200
+  },
+  "metrics": {
+    "accuracy": 0.9975,
+    "precision": 0.9975,
+    "recall": 0.9975,
+    "f1_score": 0.9975
+  },
+  "model_comparison": {
+    "Random Forest": {
+      "accuracy": 0.9975,
+      "precision": 0.9975,
+      "recall": 0.9975,
+      "f1_score": 0.9975
+    },
+    "Logistic Regression": {
+      "accuracy": 0.325,
+      "precision": 0.3687,
+      "recall": 0.325,
+      "f1_score": 0.3287
+    },
+    "Decision Tree": {
+      "accuracy": 0.9917,
+      "precision": 0.9917,
+      "recall": 0.9917,
+      "f1_score": 0.9917
+    }
+  }
+}

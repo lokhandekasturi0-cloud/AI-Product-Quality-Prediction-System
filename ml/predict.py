@@ -17,7 +17,7 @@ def predict_frame(df):
     # REWORK 40-65, and REJECT 5-35.
     confidence=probs.max(axis=1); base={'PASS':70.0,'REWORK':40.0,'REJECT':5.0}; span={'PASS':30.0,'REWORK':25.0,'REJECT':30.0}
     out['Quality_Score']=[round(base[label]+span[label]*conf,1) for label,conf in zip(out['Prediction'],confidence)]
-    info=out.apply(explain,axis=1,result_type='expand'); out['Reason']=info[0]; out['Suggested_Action']=info[1]
+    info=out.apply(lambda row: explain(row, row['Prediction']),axis=1,result_type='expand'); out['Reason']=info[0]; out['Suggested_Action']=info[1]
     return out
 def metadata():
     if not (ROOT/'models'/'model_metadata.json').exists(): load_model()

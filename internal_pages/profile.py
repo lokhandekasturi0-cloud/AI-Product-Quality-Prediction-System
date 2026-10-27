@@ -27,4 +27,4 @@ def render_profile(user_id):
         return
     df=pd.DataFrame(records); counts=df['prediction'].value_counts(); cols=st.columns(4)
     for col,label,value in zip(cols,["Total Predictions","PASS","REWORK","REJECT"],[len(df),counts.get('PASS',0),counts.get('REWORK',0),counts.get('REJECT',0)]): col.metric(label,value)
-    st.dataframe(df[['prediction_date','product_id','quality_score','prediction','reason','suggested_action']],use_container_width=True)
+    st.dataframe(df[['prediction_date','product_id','quality_score','prediction','reason','suggested_action']],width="stretch")

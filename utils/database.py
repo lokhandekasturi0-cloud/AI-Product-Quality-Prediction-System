@@ -4,8 +4,10 @@ from pathlib import Path
 DB_PATH = Path(__file__).resolve().parents[1] / "database" / "quality_prediction.db"
 
 def connection():
-    con = sqlite3.connect(DB_PATH, check_same_thread=False)
+    con = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=30)
     con.row_factory = sqlite3.Row
+    con.execute("PRAGMA busy_timeout = 30000")
+    con.execute("PRAGMA journal_mode = WAL")
     return con
 
 def init_db():
@@ -25,6 +27,16 @@ def add_prediction(user_id, row, result):
           (row["Product_ID"], *[float(row[k]) for k in ["Temperature","Voltage","Current","Weight","Pressure","Humidity","Machine_Speed"]], user_id))
         con.execute("INSERT INTO predictions(product_id,quality_score,prediction,reason,suggested_action,user_id) VALUES(?,?,?,?,?,?)",
           (row["Product_ID"], float(result["Quality_Score"]), result["Prediction"], result["Reason"], result["Suggested_Action"], user_id))
+
+def add_predictions(user_id, results):
+    """Persist a bulk result in one short SQLite transaction."""
+    products=[]; predictions=[]
+    for row in results.to_dict("records"):
+        products.append((row["Product_ID"], *[float(row[key]) for key in ["Temperature","Voltage","Current","Weight","Pressure","Humidity","Machine_Speed"]], user_id))
+        predictions.append((row["Product_ID"], float(row["Quality_Score"]), row["Prediction"], row["Reason"], row["Suggested_Action"], user_id))
+    with connection() as con:
+        con.executemany("INSERT INTO products(product_id,temperature,voltage,current,weight,pressure,humidity,machine_speed,user_id) VALUES(?,?,?,?,?,?,?,?,?)", products)
+        con.executemany("INSERT INTO predictions(product_id,quality_score,prediction,reason,suggested_action,user_id) VALUES(?,?,?,?,?,?)", predictions)
 
 def history(user_id):
     with connection() as con:

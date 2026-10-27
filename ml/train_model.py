@@ -30,9 +30,20 @@ def demo_data(n=6000, seed=42):
     df=pd.DataFrame(rows); df.insert(0,'Product_ID',[f'CHG-{i:05d}' for i in range(1,n+1)])
     return df.sample(frac=1,random_state=seed).reset_index(drop=True)
 def main():
-    raw=ROOT/'data'/'raw'/'manufacturing_data.csv'; raw.parent.mkdir(parents=True,exist_ok=True); (ROOT/'data'/'processed').mkdir(parents=True,exist_ok=True); (ROOT/'models').mkdir(parents=True,exist_ok=True)
-    # Regenerate to replace older two-class demo datasets.
-    df=demo_data(); df.to_csv(raw,index=False); df.to_csv(ROOT/'data'/'processed'/'cleaned_data.csv',index=False)
+    raw=ROOT/'data'/'raw'/'manufacturing_data.csv'; supplied=ROOT/'data'/'raw'/'electronics_quality_training_6000.csv'; raw.parent.mkdir(parents=True,exist_ok=True); (ROOT/'data'/'processed').mkdir(parents=True,exist_ok=True); (ROOT/'models').mkdir(parents=True,exist_ok=True)
+    # Prefer the supplied labelled manufacturing dataset when present. Its
+    # Quality_Status field is normalized to the application's Quality target.
+    if supplied.exists():
+        df=pd.read_csv(supplied).rename(columns={'Quality_Status':'Quality'})
+        required=['Product_ID',*FEATURES,'Quality']
+        missing=[column for column in required if column not in df.columns]
+        if missing: raise ValueError(f"Supplied training dataset is missing columns: {missing}")
+        df=df[required].copy()
+        df['Quality']=df['Quality'].astype(str).str.upper().str.strip()
+        if set(df['Quality'].unique()) != {'PASS','REWORK','REJECT'}: raise ValueError("Training data must contain PASS, REWORK, and REJECT labels.")
+    else:
+        df=demo_data()
+    df.to_csv(raw,index=False); df.to_csv(ROOT/'data'/'processed'/'cleaned_data.csv',index=False)
     xtr,xte,ytr,yte=train_test_split(df[FEATURES],df.Quality,test_size=.2,stratify=df.Quality,random_state=42)
     choices={'Random Forest':Pipeline([('model',RandomForestClassifier(n_estimators=180,min_samples_leaf=2,class_weight='balanced',random_state=42))]),'Logistic Regression':Pipeline([('scale',StandardScaler()),('model',LogisticRegression(max_iter=1500,class_weight='balanced'))]),'Decision Tree':Pipeline([('model',DecisionTreeClassifier(class_weight='balanced',random_state=42))])}; results={}
     for name,m in choices.items(): m.fit(xtr,ytr); results[name]=metrics(yte,m.predict(xte))
